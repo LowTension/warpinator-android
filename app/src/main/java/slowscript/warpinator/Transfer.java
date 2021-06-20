@@ -124,6 +124,7 @@ public class Transfer {
         setStatus(Status.TRANSFERRING);
         actualStartTime = System.currentTimeMillis();
         bytesTransferred = 0;
+        cancelled = false;
         updateUI();
         observer.setOnReadyHandler(new Runnable() {
             int i = 0;
@@ -173,11 +174,11 @@ public class Transfer {
                         updateUI();
                         return;
                     } catch (Exception e) {
-                        observer.onError(e);
+                        Log.e(TAG, "Error sending files", e);
                         setStatus(Status.FAILED);
                         errors.add(e.getLocalizedMessage());
-                        Log.e(TAG, "Error sending files", e);
                         updateUI();
+                        observer.onError(e);
                         return;
                     }
                 }
@@ -233,7 +234,7 @@ public class Transfer {
         //Show in UI
         if (svc.transfersView != null && remoteUUID.equals(svc.transfersView.remote.uuid) && svc.transfersView.isTopmost)
             svc.transfersView.updateTransfers(remoteUUID);
-        else if (svc.server.notifyIncoming) {  //Notification
+        else if (svc.server.notifyIncoming && !autoAccept) {  //Notification
             Intent intent = new Intent(svc, TransfersActivity.class);
             intent.putExtra("remote", remoteUUID);
             PendingIntent pendingIntent = PendingIntent.getActivity(svc, 0, intent, 0);
